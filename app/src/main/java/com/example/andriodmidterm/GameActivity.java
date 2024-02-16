@@ -9,6 +9,8 @@ import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.TextView;
 
+import java.text.NumberFormat;
+import java.util.Locale;
 import java.util.Random;
 
 public class GameActivity extends AppCompatActivity {
@@ -55,6 +57,9 @@ public class GameActivity extends AppCompatActivity {
 
         whiteRerollButton = findViewById(R.id.reroll1);
         blackRerollButton = findViewById(R.id.reroll2);
+
+        totalBetWhite = 0;
+        totalBetBlack = 0;
 
         updateDisplay();
 
@@ -119,7 +124,18 @@ public class GameActivity extends AppCompatActivity {
     }
 
     private void updateDisplay() {
+        TextView balanceWhiteText = findViewById(R.id.balanceTextWhite);
+        TextView balanceBlackText = findViewById(R.id.balanceTextBlack);
+        TextView totalBetWhiteText = findViewById(R.id.totalBetWhite);
+        TextView totalBetBlackText = findViewById(R.id.totalBetBlack);
+        TextView totalPotText = findViewById(R.id.pottotaltxt);
 
+        balanceWhiteText.setText(NumberFormat.getCurrencyInstance(new Locale("en", "US")).format(player1.getBalance()));
+        balanceBlackText.setText(NumberFormat.getCurrencyInstance(new Locale("en", "US")).format(player2.getBalance()));
+        totalBetWhiteText.setText(NumberFormat.getCurrencyInstance(new Locale("en", "US")).format(totalBetWhite));
+        totalBetBlackText.setText(NumberFormat.getCurrencyInstance(new Locale("en", "US")).format(totalBetBlack));
+        String totalPotString = "Pot Total: " + NumberFormat.getCurrencyInstance(new Locale("en", "US")).format(totalBetBlack+totalBetWhite);
+        totalPotText.setText(totalPotString);
     }
 
     private int rollDice(Team team) {
