@@ -13,6 +13,8 @@ import java.text.NumberFormat;
 import java.util.Locale;
 import java.util.Random;
 
+import org.apache.commons.lang3.SerializationUtils;
+
 public class GameActivity extends AppCompatActivity {
 
     private enum GameState { NOT_STARTED, STARTED, AWAITING, FINISHED}
@@ -35,6 +37,9 @@ public class GameActivity extends AppCompatActivity {
     private int sumWhite;
     private int sumBlack;
 
+    private int rerollCountWhite;
+    private int rerollCountBlack;
+
     private double totalBetWhite;
     private double totalBetBlack;
 
@@ -50,8 +55,8 @@ public class GameActivity extends AppCompatActivity {
         player2 = (Account) getIntent().getSerializableExtra("player2");
 
         //Account Snapshots for restoring in event of Mid-Game leave
-        player1Snapshot = player1;
-        player2Snapshot = player2;
+        player1Snapshot = SerializationUtils.clone(player1);
+        player2Snapshot = SerializationUtils.clone(player2);
 
         currentGameState = GameState.NOT_STARTED;
 
@@ -61,14 +66,35 @@ public class GameActivity extends AppCompatActivity {
         totalBetWhite = 0;
         totalBetBlack = 0;
 
+        rerollCountWhite = 2;
+        rerollCountBlack = 2;
+
         updateDisplay();
 
         whiteRerollButton.setOnClickListener(view -> {
-
+            if (rerollCountWhite > 0) {
+                rerollCountWhite-= 1;
+                if (rerollCountWhite == 0) {
+                    whiteRerollButton.setEnabled(false);
+                }
+                sumWhite = rollDice(Team.WHITE);
+            }
+            TextView rerollleftWhiteText = findViewById(R.id.rerollleft1);
+            String rerollleftWhiteString = "Rerolls Left: " + rerollCountWhite;
+            rerollleftWhiteText.setText(rerollleftWhiteString);
         });
 
         blackRerollButton.setOnClickListener(view -> {
-
+            if (rerollCountBlack > 0) {
+                rerollCountBlack-= 1;
+                if (rerollCountBlack == 0) {
+                    blackRerollButton.setEnabled(false);
+                }
+                sumBlack = rollDice(Team.BLACK);
+            }
+            TextView rerollleftBlackText = findViewById(R.id.rerollleft2);
+            String rerollleftBlackString = "Rerolls Left: " + rerollCountBlack;
+            rerollleftBlackText.setText(rerollleftBlackString);
         });
 
         //Play Button
@@ -111,7 +137,7 @@ public class GameActivity extends AppCompatActivity {
         //Menu Button
         findViewById(R.id.quitGameBtn).setOnClickListener(view -> {
             Intent intent = new Intent(this, MainActivity.class);
-            if (currentGameState==GameState.NOT_STARTED || currentGameState==GameState.FINISHED) {
+            if (currentGameState == GameState.NOT_STARTED || currentGameState == GameState.FINISHED) {
                 intent.putExtra("player1", player1);
                 intent.putExtra("player2", player2);
             }

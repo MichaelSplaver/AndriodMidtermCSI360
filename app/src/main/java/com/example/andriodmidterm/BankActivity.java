@@ -12,6 +12,7 @@ import android.widget.RadioGroup;
 import android.widget.TextView;
 
 import java.text.NumberFormat;
+import java.util.ArrayList;
 import java.util.Locale;
 
 public class BankActivity extends AppCompatActivity {
@@ -124,6 +125,9 @@ public class BankActivity extends AppCompatActivity {
         RecyclerView transactionsView = (RecyclerView) findViewById(R.id.recyclerBank);
         transactionsView.setLayoutManager(new LinearLayoutManager(this));
 
-        transactionsView.setAdapter(new TransactionsAdapter(account.getTransactions(), false));
+        ArrayList<Transaction> recyclerViewList = new ArrayList<>();
+        recyclerViewList = account.getTransactions();
+
+        transactionsView.setAdapter(new TransactionsAdapter(recyclerViewList, false));
     }
 }
