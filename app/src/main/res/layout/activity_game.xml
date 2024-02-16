@@ -130,6 +130,7 @@
                     android:layout_weight="1"
                     android:textStyle="bold"/>
                 <EditText
+                    android:id="@+id/whiteBetAmount"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_weight="10"
@@ -270,6 +271,7 @@
                     android:layout_weight="1"
                     android:textStyle="bold"/>
                 <EditText
+                    android:id="@+id/blackBetAmount"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_weight="10"

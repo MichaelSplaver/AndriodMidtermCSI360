@@ -6,6 +6,7 @@ import android.content.Intent;
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.widget.Button;
+import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.TextView;
 
@@ -43,6 +44,8 @@ public class GameActivity extends AppCompatActivity {
     private double totalBetWhite;
     private double totalBetBlack;
 
+    private boolean firstRound;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -63,11 +66,16 @@ public class GameActivity extends AppCompatActivity {
         whiteRerollButton = findViewById(R.id.reroll1);
         blackRerollButton = findViewById(R.id.reroll2);
 
+        EditText betAmountWhite = findViewById(R.id.whiteBetAmount);
+        EditText betAmountBlack = findViewById(R.id.blackBetAmount);
+
         totalBetWhite = 0;
         totalBetBlack = 0;
 
         rerollCountWhite = 2;
         rerollCountBlack = 2;
+
+        firstRound = true;
 
         updateDisplay();
 
@@ -121,16 +129,24 @@ public class GameActivity extends AppCompatActivity {
 
                 updateDisplay();
 
+
                 whiteRerollButton.setEnabled(true);
                 blackRerollButton.setEnabled(true);
 
+                if (!firstRound) {
+                    betAmountWhite.setEnabled(true);
+                    betAmountBlack.setEnabled(false);
+                }
+
+                firstRound = false;
                 playButton.setText("Next Round");
                 playButton.setEnabled(true);
                 currentGameState = GameState.AWAITING;
 
             }
             else if (currentGameState==GameState.AWAITING) {
-                //...
+                //Starting Next Round
+                
             }
         });
 
