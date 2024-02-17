@@ -18,19 +18,14 @@ import org.apache.commons.lang3.SerializationUtils;
 
 public class GameActivity extends AppCompatActivity {
 
-    private enum GameState { NOT_STARTED, STARTED, AWAITING, FINISHED}
-
-    //Player 1 = White | Player 2 = Black
-    private enum Team { WHITE, BLACK }
-
-    Random random;
+    GameManager gameManager;
     private Account player1;
     private Account player2;
 
     private Account player1Snapshot;
-    private  Account player2Snapshot;
+    private Account player2Snapshot;
 
-    private GameState currentGameState;
+    private GameManager.GameState currentGameState;
 
     private Button whiteRerollButton;
     private Button blackRerollButton;
@@ -40,6 +35,9 @@ public class GameActivity extends AppCompatActivity {
 
     private int rerollCountWhite;
     private int rerollCountBlack;
+
+    private int totalPointsWhite;
+    private int totalPointsBlack;
 
     private double totalBetWhite;
     private double totalBetBlack;
@@ -51,7 +49,7 @@ public class GameActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_game);
 
-        random = new Random();
+        gameManager = new GameManager(this);
 
         //Manipulatable Accounts
         player1 = (Account) getIntent().getSerializableExtra("player1");
@@ -61,7 +59,7 @@ public class GameActivity extends AppCompatActivity {
         player1Snapshot = SerializationUtils.clone(player1);
         player2Snapshot = SerializationUtils.clone(player2);
 
-        currentGameState = GameState.NOT_STARTED;
+        currentGameState = GameManager.GameState.INIT;
 
         whiteRerollButton = findViewById(R.id.reroll1);
         blackRerollButton = findViewById(R.id.reroll2);
@@ -72,8 +70,14 @@ public class GameActivity extends AppCompatActivity {
         totalBetWhite = 0;
         totalBetBlack = 0;
 
-        rerollCountWhite = 2;
-        rerollCountBlack = 2;
+        TextView totalPointsWhiteText = findViewById(R.id.pointswhite);
+        TextView totalPointsBlackText = findViewById(R.id.pointsblack);
+
+        totalPointsWhite = 0;
+        totalPointsBlack = 0;
+
+        TextView rerollleftWhiteText = findViewById(R.id.rerollleft1);
+        TextView rerollleftBlackText = findViewById(R.id.rerollleft2);
 
         firstRound = true;
 
@@ -85,9 +89,8 @@ public class GameActivity extends AppCompatActivity {
                 if (rerollCountWhite == 0) {
                     whiteRerollButton.setEnabled(false);
                 }
-                sumWhite = rollDice(Team.WHITE);
+                sumWhite = gameManager.rollDice(GameManager.Team.WHITE);
             }
-            TextView rerollleftWhiteText = findViewById(R.id.rerollleft1);
             String rerollleftWhiteString = "Rerolls Left: " + rerollCountWhite;
             rerollleftWhiteText.setText(rerollleftWhiteString);
         });
@@ -98,9 +101,9 @@ public class GameActivity extends AppCompatActivity {
                 if (rerollCountBlack == 0) {
                     blackRerollButton.setEnabled(false);
                 }
-                sumBlack = rollDice(Team.BLACK);
+                sumBlack = gameManager.rollDice(GameManager.Team.BLACK);
             }
-            TextView rerollleftBlackText = findViewById(R.id.rerollleft2);
+
             String rerollleftBlackString = "Rerolls Left: " + rerollCountBlack;
             rerollleftBlackText.setText(rerollleftBlackString);
         });
@@ -108,52 +111,114 @@ public class GameActivity extends AppCompatActivity {
         //Play Button
         Button playButton = findViewById(R.id.continueGameBtn);
         playButton.setOnClickListener(view -> {
-            if (currentGameState==GameState.FINISHED) {
+            if (currentGameState==GameManager.GameState.FINISHED) {
                 //...
+
             }
-            else if (currentGameState==GameState.NOT_STARTED) {
+            else if (currentGameState==GameManager.GameState.INIT || currentGameState==GameManager.GameState.NOT_STARTED) {
 
-                currentGameState = GameState.STARTED;
-                sumWhite = rollDice(Team.WHITE);
-                sumBlack = rollDice(Team.BLACK);
+                currentGameState = GameManager.GameState.STARTED;
 
-                player1.updateBalance(-50);
+                double betValueWhite;
+                double betValueBlack;
+                String transacationMessage;
+
+                if (!firstRound) {
+                    if (betAmountWhite.getText().toString() == ""){
+                        betAmountWhite.setText("0");
+                    }
+                    if (betAmountBlack.getText().toString() == ""){
+                        betAmountBlack.setText("0");
+                    }
+
+                    betValueWhite = Double.valueOf(betAmountWhite.getText().toString());
+                    betValueBlack = Double.valueOf(betAmountBlack.getText().toString());
+                    transacationMessage = "Dice Game Bet";
+                } else {
+                    betValueWhite = 50;
+                    betValueBlack = 50;
+                    transacationMessage = "Dice Game Buy-In";
+                }
+                player1.updateBalance(-betValueWhite);
                 player1.addTransaction(new Transaction(
-                        -50, player1.getBalance(), "Dice Game Buy-In", Transaction.TransactionType.TRANSFER, "Player 1"));
-                totalBetWhite+=50;
+                        -betValueWhite, player1.getBalance(), transacationMessage, Transaction.TransactionType.TRANSFER, "Player 1"));
+                totalBetWhite+=betValueWhite;
 
-                player2.updateBalance(-50);
+                player2.updateBalance(-betValueBlack);
                 player2.addTransaction(new Transaction(
-                        -50, player2.getBalance(), "Dice Game Buy-In", Transaction.TransactionType.TRANSFER, "Player 2"));
-                totalBetBlack+=50;
+                        -betValueBlack, player2.getBalance(), transacationMessage, Transaction.TransactionType.TRANSFER, "Player 2"));
+                totalBetBlack+=betValueBlack;
+
+
+                sumWhite = gameManager.rollDice(GameManager.Team.WHITE);
+                sumBlack = gameManager.rollDice(GameManager.Team.BLACK);
 
                 updateDisplay();
 
+                if (totalPointsBlack+sumBlack>=100 || totalPointsWhite+sumWhite>100)
+                {
+                    totalPointsWhite+=sumWhite;
+                    totalPointsBlack+=sumBlack;
+                    totalPointsWhiteText.setText("Points: " + totalPointsWhite);
+                    totalPointsBlackText.setText("Points: " + totalPointsBlack);
+                    currentGameState = GameManager.GameState.FINISHED;
+                }
+                else {
+                    rerollCountWhite = 2;
+                    rerollCountBlack = 2;
+                    String rerollleftWhiteString = "Rerolls Left: " + rerollCountWhite;
+                    rerollleftWhiteText.setText(rerollleftWhiteString);
+                    String rerollleftBlackString = "Rerolls Left: " + rerollCountBlack;
+                    rerollleftBlackText.setText(rerollleftBlackString);
 
-                whiteRerollButton.setEnabled(true);
-                blackRerollButton.setEnabled(true);
 
-                if (!firstRound) {
-                    betAmountWhite.setEnabled(true);
-                    betAmountBlack.setEnabled(false);
+                    whiteRerollButton.setEnabled(true);
+                    blackRerollButton.setEnabled(true);
+
+                    if (firstRound) {
+                        betAmountWhite.setEnabled(false);
+                        betAmountBlack.setEnabled(false);
+                        betAmountWhite.setText(NumberFormat.getCurrencyInstance(new Locale("en", "US")).format(50.0));
+                        betAmountBlack.setText(NumberFormat.getCurrencyInstance(new Locale("en", "US")).format(50.0));
+                    }
+
+                    firstRound = false;
+                    playButton.setText("Next Round");
+                    playButton.setEnabled(true);
+                    currentGameState = GameManager.GameState.AWAITING;
                 }
 
-                firstRound = false;
-                playButton.setText("Next Round");
-                playButton.setEnabled(true);
-                currentGameState = GameState.AWAITING;
-
             }
-            else if (currentGameState==GameState.AWAITING) {
+            else if (currentGameState==GameManager.GameState.AWAITING) {
                 //Starting Next Round
-                
+                whiteRerollButton.setEnabled(false);
+                blackRerollButton.setEnabled(false);
+
+                betAmountWhite.setEnabled(true);
+                betAmountBlack.setEnabled(true);
+                betAmountWhite.setText("");
+                betAmountBlack.setText("");
+
+                totalPointsWhite+=sumWhite;
+                totalPointsBlack+=sumBlack;
+                totalPointsWhiteText.setText("Points: " + totalPointsWhite);
+                totalPointsBlackText.setText("Points: " + totalPointsBlack);
+
+                updateDisplay();
+
+                betAmountWhite.setText("0");
+                betAmountBlack.setText("0");
+
+                playButton.setText("Start Round");
+                currentGameState = GameManager.GameState.NOT_STARTED;
+
             }
         });
 
         //Menu Button
         findViewById(R.id.quitGameBtn).setOnClickListener(view -> {
             Intent intent = new Intent(this, MainActivity.class);
-            if (currentGameState == GameState.NOT_STARTED || currentGameState == GameState.FINISHED) {
+            if (currentGameState == GameManager.GameState.INIT || currentGameState == GameManager.GameState.FINISHED) {
                 intent.putExtra("player1", player1);
                 intent.putExtra("player2", player2);
             }
@@ -180,62 +245,5 @@ public class GameActivity extends AppCompatActivity {
         totalPotText.setText(totalPotString);
     }
 
-    private int rollDice(Team team) {
-        int roll1 = random.nextInt(6) + 1;
-        int roll2 = random.nextInt(6) + 1;
-        int roll3 = random.nextInt(6) + 1;
 
-        int rollSum = (roll1+roll2+roll3);
-
-        String diceSumText = "Sum of Dice: " + rollSum;
-
-        if (team==Team.WHITE) {
-
-            TextView diceSumTextView = findViewById(R.id.diceSumWhite);
-            diceSumTextView.setText(diceSumText);
-
-            ImageView whiteDice1 = findViewById(R.id.whitedice1);
-            whiteDice1.setImageResource(retrieveDiceImage(Team.WHITE, roll1));
-
-            ImageView whiteDice2 = findViewById(R.id.whitedice2);
-            whiteDice2.setImageResource(retrieveDiceImage(Team.WHITE, roll2));
-
-            ImageView whiteDice3 = findViewById(R.id.whitedice3);
-            whiteDice3.setImageResource(retrieveDiceImage(Team.WHITE, roll3));
-        }
-        else if (team==Team.BLACK) {
-
-            TextView diceSumTextView = findViewById(R.id.diceSumBlack);
-            diceSumTextView.setText(diceSumText);
-
-            ImageView blackDice1 = findViewById(R.id.blackdice1);
-            blackDice1.setImageResource(retrieveDiceImage(Team.BLACK, roll1));
-
-            ImageView blackDice2 = findViewById(R.id.blackdice2);
-            blackDice2.setImageResource(retrieveDiceImage(Team.BLACK, roll2));
-
-            ImageView blackDice3 = findViewById(R.id.blackdice3);
-            blackDice3.setImageResource(retrieveDiceImage(Team.BLACK, roll3));
-        }
-        return rollSum;
-    }
-
-    private int retrieveDiceImage (Team team, int number) {
-        switch (number) {
-            case 1:
-                return (team==Team.WHITE) ? R.drawable.whitedice1 : R.drawable.blackdice1;
-            case 2:
-                return (team==Team.WHITE) ? R.drawable.whitedice2 : R.drawable.blackdice2;
-            case 3:
-                return (team==Team.WHITE) ? R.drawable.whitedice3 : R.drawable.blackdice3;
-            case 4:
-                return (team==Team.WHITE) ? R.drawable.whitedice4 : R.drawable.blackdice4;
-            case 5:
-                return (team==Team.WHITE) ? R.drawable.whitedice5 : R.drawable.blackdice5;
-            case 6:
-                return (team==Team.WHITE) ? R.drawable.whitedice6 : R.drawable.blackdice6;
-            default:
-                return -1;
-        }
-    }
 }
