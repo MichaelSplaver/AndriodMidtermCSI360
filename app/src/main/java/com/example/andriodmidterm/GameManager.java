@@ -154,6 +154,7 @@ public class GameManager {
             refreshDiceImagesAndSum(rolls, Team.BLACK);
             sumBlack = Arrays.stream(rolls).sum();
         }
+        //if winner occurs during reroll logic
         if (checkIfWinner()) {
             disableRerolling();
             if (currentGameState== GameState.AWAITING){

@@ -34,15 +34,18 @@ public class TransactionsAdapter extends RecyclerView.Adapter<TransactionsAdapte
     @Override
     public void onBindViewHolder(@NonNull TransactionsAdapter.holder holder, int position) {
         double amountChange = transactions.get(position).getAmountChange();
+        //format currency
         holder.transactionAmountChange.setText(
             NumberFormat.getCurrencyInstance(new Locale("en", "US"))
                 .format(amountChange));
+        //display positive or negative colors based on transaction
         if (amountChange < 0) {
             holder.transactionAmountChange.setTextColor(Color.parseColor("#b52d2d"));
         }
         else {
             holder.transactionAmountChange.setTextColor(Color.parseColor("#4ecf1f"));
         }
+        //displays transaction owner if specified
         if (displayOwner) {
             String transactionTypeString = transactions.get(position).getTransactionOwner() + " | " +
                 transactions.get(position).getTransactionType().toString();
