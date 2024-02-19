@@ -4,6 +4,7 @@ import android.app.Activity;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageView;
+import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -28,9 +29,11 @@ public class GameManager {
     EditText betAmountWhite, betAmountBlack;
     ImageView whiteDice1, whiteDice2, whiteDice3, blackDice1, blackDice2, blackDice3;
     Button whiteRerollButton, blackRerollButton, playButton;
+    ProgressBar progressBarWhite, progressBarBlack;
     int sumWhite, sumBlack, rerollCountWhite, rerollCountBlack, totalPointsWhite, totalPointsBlack;
     double totalBetWhite, totalBetBlack, betValueWhite, betValueBlack;
     private GameState currentGameState;
+    Team winner;
 
     public GameManager(Activity activity) {
         gameActivity = activity;
@@ -71,6 +74,8 @@ public class GameManager {
         totalBetBlackText = gameActivity.findViewById(R.id.totalBetBlackText);
         totalBalanceWhiteText = gameActivity.findViewById(R.id.balanceTextWhite);
         totalBalanceBlackText = gameActivity.findViewById(R.id.balanceTextBlack);
+        progressBarWhite = gameActivity.findViewById(R.id.progressBarWhite);
+        progressBarBlack = gameActivity.findViewById(R.id.progressBarBlack);
         potTotalText = gameActivity.findViewById(R.id.pottotaltxt);
         playButton = gameActivity.findViewById(R.id.continueGameBtn);
     }
@@ -100,6 +105,20 @@ public class GameManager {
             rollDice(Team.WHITE);
             rollDice(Team.BLACK);
             refreshGUI();
+            if (checkIfWinner()) {
+                if (winner==null){
+                    Toast.makeText(gameActivity,"Game was tied!\nClick \"Finish Game\" to finalize the game", Toast.LENGTH_LONG).show();
+                }
+                else {
+                    Toast.makeText(gameActivity, winner==Team.WHITE ? "Player 1 has won the game!\nClick \"Finish Game\" to finalize the game" : "Player 2 has won the game!\nClick \"Finish Game\" to finalize the game", Toast.LENGTH_LONG).show();
+                }
+                totalPointsWhite+=sumWhite;
+                totalPointsBlack+=sumBlack;
+                refreshGUI();
+                playButton.setText("Finish Game");
+                currentGameState=GameState.FINISHED;
+                return;
+            }
             enableRerolling();
             playButton.setText("Next Round");
             currentGameState=GameState.AWAITING;
@@ -109,15 +128,43 @@ public class GameManager {
             totalPointsWhite+=sumWhite;
             totalPointsBlack+=sumBlack;
             refreshGUI();
-            newRoundCleanup();
+            newRoundCleanup("5");
             disableRerolling();
             enableBetting();
-            Toast.makeText(gameActivity, "Please place a bet for the next round", Toast.LENGTH_SHORT).show();
+            //Toast.makeText(gameActivity, "Please place a bet for the next round", Toast.LENGTH_SHORT).show();
             playButton.setText("Start Round");
-            currentGameState = GameManager.GameState.NOT_STARTED;
+            currentGameState = GameState.NOT_STARTED;
         }
         else if (currentGameState==GameState.FINISHED) {
+            if (winner==null){
+                player1 = player1Snapshot;
+                player2 = player2Snapshot;
+            }
+            else {
+                awardWinnings(winner,totalBetBlack+totalBetWhite, "Dice Game Winnings");
+            }
+            newRoundCleanup("");
+            playButton.setText("New Game");
+            currentGameState = GameState.INIT;
+        }
+    }
 
+    private boolean checkIfWinner() {
+        if (totalPointsWhite+sumWhite >= 100 && totalPointsBlack+sumBlack >= 100)
+        {
+            winner = null;
+            return true;
+        }
+        if (totalPointsWhite+sumWhite >= 100){
+            winner = Team.WHITE;
+            return true;
+        }
+        else if (totalPointsBlack+sumBlack >= 100) {
+            winner = Team.BLACK;
+            return true;
+        }
+        else {
+            return false;
         }
     }
 
@@ -133,9 +180,9 @@ public class GameManager {
         return true;
     }
 
-    private void newRoundCleanup() {
-        betAmountWhite.setText("5");
-        betAmountBlack.setText("5");
+    private void newRoundCleanup(String betAmount) {
+        betAmountWhite.setText(betAmount);
+        betAmountBlack.setText(betAmount);
 
         rerollCountWhite = 3;
         rerollCountBlack = 3;
@@ -147,11 +194,27 @@ public class GameManager {
     }
 
     private void newGameSetup() {
+        winner = null;
         betAmountWhite.setText("50");
         betAmountBlack.setText("50");
 
         rerollCountWhite = 3;
         rerollCountBlack = 3;
+    }
+
+    private void awardWinnings(Team team, double amount, String message) {
+        if (team==Team.WHITE) {
+            player1.updateBalance(amount);
+            player1.addTransaction(new Transaction(
+                    amount, player1.getBalance(), message, Transaction.TransactionType.TRANSFER, "Player 1"));
+            totalBetWhite += amount;
+        }
+        else if (team==Team.BLACK) {
+            player2.updateBalance(amount);
+            player2.addTransaction(new Transaction(
+                    amount, player2.getBalance(), message, Transaction.TransactionType.TRANSFER, "Player 2"));
+            totalBetBlack+=amount;
+        }
     }
 
     private void chargeAccount(Team team, double amount, String message) {
@@ -173,6 +236,8 @@ public class GameManager {
     public void refreshGUI() {
         totalPointsWhiteText.setText("Points: " + totalPointsWhite);
         totalPointsBlackText.setText("Points: " + totalPointsBlack);
+        progressBarWhite.setProgress(totalPointsWhite);
+        progressBarBlack.setProgress(totalPointsBlack);
         rerollleftWhiteText.setText("Rerolls Left: " + rerollCountWhite);
         rerollleftBlackText.setText("Rerolls Left: " + rerollCountBlack);
         totalBetWhiteText.setText(NumberFormat.getCurrencyInstance(new Locale("en", "US")).format(totalBetWhite));

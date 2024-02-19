@@ -347,8 +347,8 @@
         android:layout_height="wrap_content"
         app:layout_constraintTop_toBottomOf="@id/pottotaltxt"
         android:layout_marginTop="5dp"
-        android:text="Initial Buy-in: $50.00\nPlayers can place a Bet before each round (Min. $5.00)\nFirst player to 100 points wins the Pot\n*Returning to menu will cancel the game and refund players"
-        android:textSize="14dp"
+        android:text="Initial Buy-in: $50.00\nPlayers can place a Bet before each round (Min. $5.00)\nFirst player to 100 points wins the Pot\nTie will refund player\n*Returning to menu will cancel the game and refund players"
+        android:textSize="13dp"
         android:textStyle="bold"
         android:textAlignment="center"
         android:background="#7A8A97"/>
@@ -362,7 +362,7 @@
         app:layout_constraintHorizontal_bias="0.5"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@id/rules"
-        android:layout_marginTop="20dp"/>
+        android:layout_marginTop="5dp"/>
 
     <Button
         android:id="@+id/quitGameBtn"
@@ -373,7 +373,7 @@
         app:layout_constraintHorizontal_bias="0.5"
         app:layout_constraintStart_toEndOf="@+id/continueGameBtn"
         app:layout_constraintTop_toBottomOf="@id/rules"
-        android:layout_marginTop="20dp"
+        android:layout_marginTop="5dp"
         android:backgroundTint="#FAA2A2"
         android:textColor="@color/black"
         android:textStyle="bold"/>
