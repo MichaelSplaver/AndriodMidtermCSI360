@@ -150,13 +150,14 @@ public class GameManager {
                 chargeAccount(Team.BLACK, -50, "Dice Game Refund");
             }
             else {
-                chargeAccount(Team.WHITE, totalBetWhite, "Dice Game Bet");
-                chargeAccount(Team.BLACK, totalBetBlack, "Dice Game Bet");
+                addTransaction(Team.WHITE, totalBetWhite-50, "Dice Game Bets");
+                addTransaction(Team.BLACK, totalBetBlack-50, "Dice Game Bets");
                 Thread.sleep(10);
                 awardWinnings(winner,totalBetBlack+totalBetWhite, "Dice Game Winnings");
                 player1Snapshot = SerializationUtils.clone(player1);
                 player2Snapshot = SerializationUtils.clone(player2);
             }
+            refreshGUI();
             newRoundCleanup("");
             playButton.setText("New Game");
             currentGameState = GameState.INIT;
@@ -233,6 +234,17 @@ public class GameManager {
             player2.updateBalance(amount);
             player2.addTransaction(new Transaction(
                     amount, player2.getBalance(), message, Transaction.TransactionType.TRANSFER, "Player 2"));
+        }
+    }
+
+    private void addTransaction(Team team, double amount, String message) {
+        if (team==Team.WHITE) {
+            player1.addTransaction(new Transaction(
+                    -amount, player1.getBalance(), message, Transaction.TransactionType.TRANSFER, "Player 1"));
+        }
+        else if (team==Team.BLACK) {
+            player2.addTransaction(new Transaction(
+                    -amount, player2.getBalance(), message, Transaction.TransactionType.TRANSFER, "Player 2"));
         }
     }
 

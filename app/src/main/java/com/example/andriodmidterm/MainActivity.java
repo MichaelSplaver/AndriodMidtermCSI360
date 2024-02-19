@@ -9,6 +9,8 @@ import android.os.Bundle;
 import android.view.View;
 import android.widget.TextView;
 
+import org.apache.commons.lang3.SerializationUtils;
+
 import java.text.NumberFormat;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -51,7 +53,7 @@ public class MainActivity extends AppCompatActivity {
         RecyclerView transactionsView = (RecyclerView) findViewById(R.id.recyclerMain);
         transactionsView.setLayoutManager(new LinearLayoutManager(this));
 
-        ArrayList<Transaction> combinedList = player1.getTransactions();
+        ArrayList<Transaction> combinedList = SerializationUtils.clone(player1.getTransactions());
         combinedList.addAll(player2.getTransactions());
 
         Collections.sort(combinedList, Comparator.comparing(Transaction::getDate).reversed());
