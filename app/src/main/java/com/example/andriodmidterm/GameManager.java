@@ -81,7 +81,7 @@ public class GameManager {
     }
 
     //progression of game
-    public void progressGame() {
+    public void progressGame() throws InterruptedException {
         if (currentGameState==GameState.INIT) {
             newGameSetup();
             chargeAccount(Team.WHITE, 50, "Dice Game Buy-In");
@@ -100,14 +100,18 @@ public class GameManager {
                 return;
             }
             disableBetting();
-            chargeAccount(Team.WHITE, betValueWhite, "Dice Game Bet");
-            chargeAccount(Team.BLACK, betValueBlack, "Dice Game Bet");
+            player1.updateBalance(-betValueWhite);
+            player2.updateBalance(-betValueBlack);
+            totalBetWhite += betValueWhite;
+            totalBetBlack += betValueBlack;
+            //chargeAccount(Team.WHITE, betValueWhite, "Dice Game Bet");
+            //chargeAccount(Team.BLACK, betValueBlack, "Dice Game Bet");
             rollDice(Team.WHITE);
             rollDice(Team.BLACK);
             refreshGUI();
             if (checkIfWinner()) {
                 if (winner==null){
-                    Toast.makeText(gameActivity,"Game was tied!\nClick \"Finish Game\" to finalize the game", Toast.LENGTH_LONG).show();
+                    Toast.makeText(gameActivity,"Game was tied! Bets refunded.\nClick \"Finish Game\" to finalize the game", Toast.LENGTH_LONG).show();
                 }
                 else {
                     Toast.makeText(gameActivity, winner==Team.WHITE ? "Player 1 has won the game!\nClick \"Finish Game\" to finalize the game" : "Player 2 has won the game!\nClick \"Finish Game\" to finalize the game", Toast.LENGTH_LONG).show();
@@ -139,9 +143,19 @@ public class GameManager {
             if (winner==null){
                 player1 = player1Snapshot;
                 player2 = player2Snapshot;
+                chargeAccount(Team.WHITE, 50, "Dice Game Buy-In");
+                chargeAccount(Team.BLACK, 50, "Dice Game Buy-In");
+                Thread.sleep(10);
+                chargeAccount(Team.WHITE, -50, "Dice Game Refund");
+                chargeAccount(Team.BLACK, -50, "Dice Game Refund");
             }
             else {
+                chargeAccount(Team.WHITE, totalBetWhite, "Dice Game Bet");
+                chargeAccount(Team.BLACK, totalBetBlack, "Dice Game Bet");
+                Thread.sleep(10);
                 awardWinnings(winner,totalBetBlack+totalBetWhite, "Dice Game Winnings");
+                player1Snapshot = SerializationUtils.clone(player1);
+                player2Snapshot = SerializationUtils.clone(player2);
             }
             newRoundCleanup("");
             playButton.setText("New Game");
@@ -198,6 +212,13 @@ public class GameManager {
         betAmountWhite.setText("50");
         betAmountBlack.setText("50");
 
+        totalPointsWhite = 0;
+        totalPointsBlack = 0;
+        progressBarWhite.setProgress(0);
+        progressBarBlack.setProgress(0);
+        totalBetWhite = 0;
+        totalBetBlack = 0;
+
         rerollCountWhite = 3;
         rerollCountBlack = 3;
     }
@@ -207,13 +228,11 @@ public class GameManager {
             player1.updateBalance(amount);
             player1.addTransaction(new Transaction(
                     amount, player1.getBalance(), message, Transaction.TransactionType.TRANSFER, "Player 1"));
-            totalBetWhite += amount;
         }
         else if (team==Team.BLACK) {
             player2.updateBalance(amount);
             player2.addTransaction(new Transaction(
                     amount, player2.getBalance(), message, Transaction.TransactionType.TRANSFER, "Player 2"));
-            totalBetBlack+=amount;
         }
     }
 

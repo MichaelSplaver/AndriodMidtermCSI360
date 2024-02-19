@@ -13,6 +13,8 @@ import android.widget.TextView;
 
 import java.text.NumberFormat;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.Locale;
 
 public class BankActivity extends AppCompatActivity {
@@ -122,11 +124,12 @@ public class BankActivity extends AppCompatActivity {
         selectAccount.setText("Open Account: " + accountName);
 
         //populate transactions RecyclerView
-        RecyclerView transactionsView = (RecyclerView) findViewById(R.id.recyclerBank);
+        RecyclerView transactionsView = findViewById(R.id.recyclerBank);
         transactionsView.setLayoutManager(new LinearLayoutManager(this));
 
-        ArrayList<Transaction> recyclerViewList = new ArrayList<>();
-        recyclerViewList = account.getTransactions();
+        ArrayList<Transaction> recyclerViewList = account.getTransactions();
+
+        Collections.sort(recyclerViewList, Comparator.comparing(Transaction::getDate).reversed());
 
         transactionsView.setAdapter(new TransactionsAdapter(recyclerViewList, false));
     }

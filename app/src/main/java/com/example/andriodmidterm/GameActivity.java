@@ -38,7 +38,10 @@ public class GameActivity extends AppCompatActivity {
 
         //Play Button
         findViewById(R.id.continueGameBtn).setOnClickListener(view -> {
-            gameManager.progressGame();
+            try {
+                gameManager.progressGame();
+            }
+            catch (Exception ignored) {}
         });
 
         //Menu Button
