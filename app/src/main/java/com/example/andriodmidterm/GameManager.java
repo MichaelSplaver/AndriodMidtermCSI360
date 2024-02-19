@@ -15,26 +15,33 @@ import java.util.Arrays;
 import java.util.Locale;
 import java.util.Random;
 
+/**
+ * Class that manages the game. Tracks gamestate and updates the GUI.
+ */
 public class GameManager {
     public enum GameState { INIT, NOT_STARTED, AWAITING, FINISHED}
     //Player 1 = White | Player 2 = Black
     public enum Team { WHITE, BLACK }
-    Activity gameActivity;
-    Random random;
 
-    Account player1, player2, player1Snapshot, player2Snapshot;
-    TextView diceSumTextViewWhite, diceSumTextViewBlack, totalPointsWhiteText, totalPointsBlackText,
-            rerollleftWhiteText, rerollleftBlackText, totalBetWhiteText, totalBetBlackText,
-            totalBalanceBlackText, totalBalanceWhiteText, potTotalText;
-    EditText betAmountWhite, betAmountBlack;
-    ImageView whiteDice1, whiteDice2, whiteDice3, blackDice1, blackDice2, blackDice3;
-    Button whiteRerollButton, blackRerollButton, playButton;
-    ProgressBar progressBarWhite, progressBarBlack;
-    int sumWhite, sumBlack, rerollCountWhite, rerollCountBlack, totalPointsWhite, totalPointsBlack;
-    double totalBetWhite, totalBetBlack, betValueWhite, betValueBlack;
+    private Activity gameActivity;
+    private Random random;
+    private Account player1, player2, player1Snapshot, player2Snapshot;
+    private TextView diceSumTextViewWhite, diceSumTextViewBlack, totalPointsWhiteText, totalPointsBlackText,
+             rerollleftWhiteText, rerollleftBlackText, totalBetWhiteText, totalBetBlackText,
+             totalBalanceBlackText, totalBalanceWhiteText, potTotalText;
+    private EditText betAmountWhite, betAmountBlack;
+    private ImageView whiteDice1, whiteDice2, whiteDice3, blackDice1, blackDice2, blackDice3;
+    private Button whiteRerollButton, blackRerollButton, playButton;
+    private ProgressBar progressBarWhite, progressBarBlack;
+    private int sumWhite, sumBlack, rerollCountWhite, rerollCountBlack, totalPointsWhite, totalPointsBlack;
+    private double totalBetWhite, totalBetBlack, betValueWhite, betValueBlack;
     private GameState currentGameState;
-    Team winner;
+    private Team winner;
 
+    /**
+     * Contructor for GameManager
+     * @param activity GameActivity - used for managing UI elements. Initialized the UI elements and GameState.
+     */
     public GameManager(Activity activity) {
         gameActivity = activity;
         random = new Random();
@@ -43,46 +50,13 @@ public class GameManager {
         currentGameState = GameManager.GameState.INIT;
     }
 
-    private void initializeAccounts() {
-        //Manipulatable Accounts
-        player1 = (Account) gameActivity.getIntent().getSerializableExtra("player1");
-        player2 = (Account) gameActivity.getIntent().getSerializableExtra("player2");
-
-        //Account Snapshots for restoring in event of Mid-Game leave
-        player1Snapshot = SerializationUtils.clone(player1);
-        player2Snapshot = SerializationUtils.clone(player2);
-    }
-
-    private void initializeUIElements() {
-        whiteDice1 = gameActivity.findViewById(R.id.whitedice1);
-        whiteDice2 = gameActivity.findViewById(R.id.whitedice2);
-        whiteDice3 = gameActivity.findViewById(R.id.whitedice3);
-        blackDice1 = gameActivity.findViewById(R.id.blackdice1);
-        blackDice2 = gameActivity.findViewById(R.id.blackdice2);
-        blackDice3 = gameActivity.findViewById(R.id.blackdice3);
-        diceSumTextViewWhite = gameActivity.findViewById(R.id.diceSumWhite);
-        diceSumTextViewBlack = gameActivity.findViewById(R.id.diceSumBlack);
-        whiteRerollButton = gameActivity.findViewById(R.id.reroll1);
-        blackRerollButton = gameActivity.findViewById(R.id.reroll2);
-        betAmountWhite = gameActivity.findViewById(R.id.whiteBetAmount);
-        betAmountBlack = gameActivity.findViewById(R.id.blackBetAmount);
-        totalPointsWhiteText = gameActivity.findViewById(R.id.pointswhite);
-        totalPointsBlackText = gameActivity.findViewById(R.id.pointsblack);
-        rerollleftWhiteText = gameActivity.findViewById(R.id.rerollleft1);
-        rerollleftBlackText = gameActivity.findViewById(R.id.rerollleft2);
-        totalBetWhiteText = gameActivity.findViewById(R.id.totalBetWhiteText);
-        totalBetBlackText = gameActivity.findViewById(R.id.totalBetBlackText);
-        totalBalanceWhiteText = gameActivity.findViewById(R.id.balanceTextWhite);
-        totalBalanceBlackText = gameActivity.findViewById(R.id.balanceTextBlack);
-        progressBarWhite = gameActivity.findViewById(R.id.progressBarWhite);
-        progressBarBlack = gameActivity.findViewById(R.id.progressBarBlack);
-        potTotalText = gameActivity.findViewById(R.id.pottotaltxt);
-        playButton = gameActivity.findViewById(R.id.continueGameBtn);
-    }
-
-    //progression of game
+    /**
+     * Primary functionality of the Game Manager class - Manages the GameState, GUI, Accounts, Toasts, etc..
+     * @throws InterruptedException
+     */
     public void progressGame() throws InterruptedException {
         if (currentGameState==GameState.INIT) {
+            //Game Initialization setup (also rolls the first round since the best is locked)
             newGameSetup();
             chargeAccount(Team.WHITE, 50, "Dice Game Buy-In");
             chargeAccount(Team.BLACK, 50, "Dice Game Buy-In");
@@ -95,6 +69,7 @@ public class GameManager {
             currentGameState=GameState.AWAITING;
         }
         else if (currentGameState==GameState.NOT_STARTED) {
+            //Main game functionality after bets are inputted
             if (!validateBets()) {
                 Toast.makeText(gameActivity, "Both players must enter a minimum bet of 5$", Toast.LENGTH_LONG).show();
                 return;
@@ -104,42 +79,38 @@ public class GameManager {
             player2.updateBalance(-betValueBlack);
             totalBetWhite += betValueWhite;
             totalBetBlack += betValueBlack;
-            //chargeAccount(Team.WHITE, betValueWhite, "Dice Game Bet");
-            //chargeAccount(Team.BLACK, betValueBlack, "Dice Game Bet");
             rollDice(Team.WHITE);
             rollDice(Team.BLACK);
-            refreshGUI();
             if (checkIfWinner()) {
                 if (winner==null){
                     Toast.makeText(gameActivity,"Game was tied! Bets refunded.\nClick \"Finish Game\" to finalize the game", Toast.LENGTH_LONG).show();
                 }
                 else {
-                    Toast.makeText(gameActivity, winner==Team.WHITE ? "Player 1 has won the game!\nClick \"Finish Game\" to finalize the game" : "Player 2 has won the game!\nClick \"Finish Game\" to finalize the game", Toast.LENGTH_LONG).show();
+                    Toast.makeText(gameActivity, (winner==Team.WHITE ? "Player 1 " : "Player 2 ") + "has won the game!\nClick \"Finish Game\" to finalize the game", Toast.LENGTH_LONG).show();
                 }
                 totalPointsWhite+=sumWhite;
                 totalPointsBlack+=sumBlack;
                 refreshGUI();
-                playButton.setText("Finish Game");
-                currentGameState=GameState.FINISHED;
                 return;
             }
+            refreshGUI();
             enableRerolling();
             playButton.setText("Next Round");
             currentGameState=GameState.AWAITING;
         }
         else if (currentGameState==GameState.AWAITING) {
-            //Starting Next Round
+            //Round calculations after players are finished re-rolling
             totalPointsWhite+=sumWhite;
             totalPointsBlack+=sumBlack;
             refreshGUI();
             newRoundCleanup("5");
             disableRerolling();
             enableBetting();
-            //Toast.makeText(gameActivity, "Please place a bet for the next round", Toast.LENGTH_SHORT).show();
             playButton.setText("Start Round");
             currentGameState = GameState.NOT_STARTED;
         }
         else if (currentGameState==GameState.FINISHED) {
+            //Finishing up game logic
             if (winner==null){
                 player1 = player1Snapshot;
                 player2 = player2Snapshot;
@@ -164,6 +135,63 @@ public class GameManager {
         }
     }
 
+    /**
+     * Rolls the dice on screen for the respective team and adds total to current sum.
+     * @param team Which team's side of the screen to roll the dice for.
+     */
+    public void rollDice(Team team) {
+        if (team == Team.WHITE) {
+            //if (rerollCountWhite <= 0) return;
+            rerollCountWhite-= 1;
+            int[] rolls = rollDiceValues();
+            refreshDiceImagesAndSum(rolls, Team.WHITE);
+            sumWhite = Arrays.stream(rolls).sum();
+        }
+        else if (team == Team.BLACK) {
+            //if (rerollCountBlack <= 0) return;
+            rerollCountBlack-= 1;
+            int[] rolls = rollDiceValues();
+            refreshDiceImagesAndSum(rolls, Team.BLACK);
+            sumBlack = Arrays.stream(rolls).sum();
+        }
+        if (checkIfWinner()) {
+            disableRerolling();
+            if (currentGameState== GameState.AWAITING){
+                if (winner==null){
+                    Toast.makeText(gameActivity,"Game was tied! Bets refunded.\nClick \"Finish Game\" to finalize the game", Toast.LENGTH_LONG).show();
+                }
+                else {
+                    Toast.makeText(gameActivity, (winner==Team.WHITE ? "Player 1 " : "Player 2 ") + "has won the game!\nClick \"Finish Game\" to finalize the game", Toast.LENGTH_LONG).show();
+                }
+                totalPointsWhite+=sumWhite;
+                totalPointsBlack+=sumBlack;
+            }
+            playButton.setText("Finish Game");
+            currentGameState=GameState.FINISHED;
+        }
+        refreshGUI();
+    }
+
+    //helper method for roll, Updates the GUI
+    private void refreshDiceImagesAndSum(int[] rolls, Team team) {
+        if (team==Team.WHITE) {
+            whiteDice1.setImageResource(retrieveDiceImage(Team.WHITE, rolls[0]));
+            whiteDice2.setImageResource(retrieveDiceImage(Team.WHITE, rolls[1]));
+            whiteDice3.setImageResource(retrieveDiceImage(Team.WHITE, rolls[2]));
+            if (rerollCountWhite == 0) {
+                whiteRerollButton.setEnabled(false);
+            }
+        }
+        else if (team==Team.BLACK) {
+            blackDice1.setImageResource(retrieveDiceImage(Team.BLACK, rolls[0]));
+            blackDice2.setImageResource(retrieveDiceImage(Team.BLACK, rolls[1]));
+            blackDice3.setImageResource(retrieveDiceImage(Team.BLACK, rolls[2]));
+            if (rerollCountBlack == 0) {
+                blackRerollButton.setEnabled(false);
+            }
+        }
+    }
+
     private boolean checkIfWinner() {
         if (totalPointsWhite+sumWhite >= 100 && totalPointsBlack+sumBlack >= 100)
         {
@@ -182,7 +210,7 @@ public class GameManager {
             return false;
         }
     }
-
+    //validates the bets, returns true if good bet and false if bad bet
     private boolean validateBets() {
         if (betAmountWhite.getText().toString() == "" || betAmountBlack.getText().toString() == ""){
             return false;
@@ -224,6 +252,7 @@ public class GameManager {
         rerollCountBlack = 3;
     }
 
+    //award the final winnings to the winning player
     private void awardWinnings(Team team, double amount, String message) {
         if (team==Team.WHITE) {
             player1.updateBalance(amount);
@@ -237,6 +266,7 @@ public class GameManager {
         }
     }
 
+    //add transaction to account
     private void addTransaction(Team team, double amount, String message) {
         if (team==Team.WHITE) {
             player1.addTransaction(new Transaction(
@@ -248,6 +278,7 @@ public class GameManager {
         }
     }
 
+    //charge account and add transaction
     private void chargeAccount(Team team, double amount, String message) {
         if (team==Team.WHITE) {
             player1.updateBalance(-amount);
@@ -264,7 +295,7 @@ public class GameManager {
     }
 
     //refresh all the GUI components
-    public void refreshGUI() {
+    private void refreshGUI() {
         totalPointsWhiteText.setText("Points: " + totalPointsWhite);
         totalPointsBlackText.setText("Points: " + totalPointsBlack);
         progressBarWhite.setProgress(totalPointsWhite);
@@ -280,26 +311,6 @@ public class GameManager {
         diceSumTextViewBlack.setText("Sum of Dice: " + sumBlack);
     }
 
-    //----GUI Refresh helpers---
-    private void refreshDiceImagesAndSum(int[] rolls, Team team) {
-        if (team==Team.WHITE) {
-            whiteDice1.setImageResource(retrieveDiceImage(Team.WHITE, rolls[0]));
-            whiteDice2.setImageResource(retrieveDiceImage(Team.WHITE, rolls[1]));
-            whiteDice3.setImageResource(retrieveDiceImage(Team.WHITE, rolls[2]));
-            if (rerollCountWhite == 0) {
-                whiteRerollButton.setEnabled(false);
-            }
-        }
-        else if (team==Team.BLACK) {
-            blackDice1.setImageResource(retrieveDiceImage(Team.BLACK, rolls[0]));
-            blackDice2.setImageResource(retrieveDiceImage(Team.BLACK, rolls[1]));
-            blackDice3.setImageResource(retrieveDiceImage(Team.BLACK, rolls[2]));
-            if (rerollCountBlack == 0) {
-                blackRerollButton.setEnabled(false);
-            }
-        }
-    }
-
     private void clearDiceImages() {
         whiteDice1.setImageResource(R.drawable.whitediceblank);
         whiteDice2.setImageResource(R.drawable.whitediceblank);
@@ -307,23 +318,6 @@ public class GameManager {
         blackDice1.setImageResource(R.drawable.blackdiceblank);
         blackDice2.setImageResource(R.drawable.blackdiceblank);
         blackDice3.setImageResource(R.drawable.blackdiceblank);
-    }
-    public void rollDice(Team team) {
-        if (team == Team.WHITE) {
-            //if (rerollCountWhite <= 0) return;
-            rerollCountWhite-= 1;
-            int[] rolls = rollDiceValues();
-            refreshDiceImagesAndSum(rolls, Team.WHITE);
-            sumWhite = Arrays.stream(rolls).sum();
-        }
-        else if (team == Team.BLACK) {
-            //if (rerollCountBlack <= 0) return;
-            rerollCountBlack-= 1;
-            int[] rolls = rollDiceValues();
-            refreshDiceImagesAndSum(rolls, Team.BLACK);
-            sumBlack = Arrays.stream(rolls).sum();
-        }
-        refreshGUI();
     }
 
     //Rolls the dice
@@ -354,6 +348,43 @@ public class GameManager {
             default:
                 return -1;
         }
+    }
+
+    private void initializeAccounts() {
+        //Manipulatable Accounts
+        player1 = (Account) gameActivity.getIntent().getSerializableExtra("player1");
+        player2 = (Account) gameActivity.getIntent().getSerializableExtra("player2");
+
+        //Account Snapshots for restoring in event of Mid-Game leave or tie
+        player1Snapshot = SerializationUtils.clone(player1);
+        player2Snapshot = SerializationUtils.clone(player2);
+    }
+
+    private void initializeUIElements() {
+        whiteDice1 = gameActivity.findViewById(R.id.whitedice1);
+        whiteDice2 = gameActivity.findViewById(R.id.whitedice2);
+        whiteDice3 = gameActivity.findViewById(R.id.whitedice3);
+        blackDice1 = gameActivity.findViewById(R.id.blackdice1);
+        blackDice2 = gameActivity.findViewById(R.id.blackdice2);
+        blackDice3 = gameActivity.findViewById(R.id.blackdice3);
+        diceSumTextViewWhite = gameActivity.findViewById(R.id.diceSumWhite);
+        diceSumTextViewBlack = gameActivity.findViewById(R.id.diceSumBlack);
+        whiteRerollButton = gameActivity.findViewById(R.id.reroll1);
+        blackRerollButton = gameActivity.findViewById(R.id.reroll2);
+        betAmountWhite = gameActivity.findViewById(R.id.whiteBetAmount);
+        betAmountBlack = gameActivity.findViewById(R.id.blackBetAmount);
+        totalPointsWhiteText = gameActivity.findViewById(R.id.pointswhite);
+        totalPointsBlackText = gameActivity.findViewById(R.id.pointsblack);
+        rerollleftWhiteText = gameActivity.findViewById(R.id.rerollleft1);
+        rerollleftBlackText = gameActivity.findViewById(R.id.rerollleft2);
+        totalBetWhiteText = gameActivity.findViewById(R.id.totalBetWhiteText);
+        totalBetBlackText = gameActivity.findViewById(R.id.totalBetBlackText);
+        totalBalanceWhiteText = gameActivity.findViewById(R.id.balanceTextWhite);
+        totalBalanceBlackText = gameActivity.findViewById(R.id.balanceTextBlack);
+        progressBarWhite = gameActivity.findViewById(R.id.progressBarWhite);
+        progressBarBlack = gameActivity.findViewById(R.id.progressBarBlack);
+        potTotalText = gameActivity.findViewById(R.id.pottotaltxt);
+        playButton = gameActivity.findViewById(R.id.continueGameBtn);
     }
 
     private void enableBetting() {

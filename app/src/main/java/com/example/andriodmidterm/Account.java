@@ -3,6 +3,10 @@ package com.example.andriodmidterm;
 import java.io.Serializable;
 import java.util.ArrayList;
 
+/**
+ * Represents a player's account (basically the entire player for the purposes of this game)
+ * Stores transactions an ArrayList
+ */
 public class Account implements Serializable {
     private int accountNumber;
     private double balance;

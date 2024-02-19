@@ -26,6 +26,8 @@ public class GameActivity extends AppCompatActivity {
 
         gameManager = new GameManager(this);
 
+        //=====Start Listeners Setup======
+
         //Reroll White
         findViewById(R.id.reroll1).setOnClickListener(view -> {
             gameManager.rollDice(GameManager.Team.WHITE);
@@ -47,16 +49,19 @@ public class GameActivity extends AppCompatActivity {
         //Menu Button
         findViewById(R.id.quitGameBtn).setOnClickListener(view -> {
             Intent intent = new Intent(this, MainActivity.class);
-            if (gameManager.getCurrentGameState() == GameManager.GameState.INIT || gameManager.getCurrentGameState() == GameManager.GameState.FINISHED) {
+            //if game is in INITIALIZATION game state the game may be exited without consequences
+            if (gameManager.getCurrentGameState() == GameManager.GameState.INIT) {
                 intent.putExtra("player1", gameManager.getPlayer1());
                 intent.putExtra("player2", gameManager.getPlayer2());
             }
+            //else restore to the snapshot of previous players
             else {
                 intent.putExtra("player1", gameManager.getPlayer1Snapshot());
                 intent.putExtra("player2", gameManager.getPlayer2Snapshot());
             }
             startActivity(intent);
         });
+        //=====End Listeners Setup======
     }
 
 }

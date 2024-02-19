@@ -40,6 +40,9 @@ public class TransactionsAdapter extends RecyclerView.Adapter<TransactionsAdapte
         if (amountChange < 0) {
             holder.transactionAmountChange.setTextColor(Color.parseColor("#b52d2d"));
         }
+        else {
+            holder.transactionAmountChange.setTextColor(Color.parseColor("#4ecf1f"));
+        }
         if (displayOwner) {
             String transactionTypeString = transactions.get(position).getTransactionOwner() + " | " +
                 transactions.get(position).getTransactionType().toString();

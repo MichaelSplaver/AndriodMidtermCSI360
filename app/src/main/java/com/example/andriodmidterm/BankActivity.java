@@ -10,6 +10,7 @@ import android.widget.EditText;
 import android.widget.RadioButton;
 import android.widget.RadioGroup;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import java.text.NumberFormat;
 import java.util.ArrayList;
@@ -32,11 +33,12 @@ public class BankActivity extends AppCompatActivity {
         player1 = (Account) getIntent().getSerializableExtra("player1");
         player2 = (Account) getIntent().getSerializableExtra("player2");
 
-        selectedAccount = "player1";
+        selectedAccount = "player1"; //defaulting selected account to player1
         populateBankInfo(player1);
-        //=====Listeners Setup======
 
-        //Radio Group selected changes
+        //=====Start Listeners Setup======
+
+        //Radio Group selected changes Listener
         RadioGroup accountSelector = findViewById(R.id.accountselector);
         accountSelector.setOnCheckedChangeListener((radioGroup, i) -> {
             RadioButton selectedButton = findViewById(i);
@@ -51,7 +53,7 @@ public class BankActivity extends AppCompatActivity {
             }
         });
 
-        //Deposit Button
+        //Deposit Button Click Listener
         findViewById(R.id.bankdepositbtn).setOnClickListener(view -> {
 
             EditText inputAmount = findViewById(R.id.bankInput);
@@ -61,20 +63,25 @@ public class BankActivity extends AppCompatActivity {
                 double transactionAmount = Double.parseDouble(inputAmount.getText().toString());
 
                 if (selectedAccount == "player1") {
+                    //if player1 is selected add the inputted balance and create the transaction on the account
                     player1.updateBalance(transactionAmount);
                     player1.addTransaction(new Transaction(
                             transactionAmount, player1.getBalance(), "Bank Deposit", Transaction.TransactionType.DEPOSIT, "Player 1"));
                     populateBankInfo(player1);
                 } else {
+                    //if player2 is selected add the inputted balance and create the transaction on the account
                     player2.updateBalance(transactionAmount);
                     player2.addTransaction(new Transaction(
                             transactionAmount, player2.getBalance(), "Bank Deposit", Transaction.TransactionType.DEPOSIT, "Player 2"));
                     populateBankInfo(player2);
                 }
             }
+            else {
+                Toast.makeText(this,"Please enter a minimum deposit amount", Toast.LENGTH_SHORT).show();
+            }
         });
 
-        //Withdraw Button
+        //Withdraw Button Click Listener
         findViewById(R.id.bankwithdrawbtn).setOnClickListener(view -> {
 
             EditText inputAmount = findViewById(R.id.bankInput);
@@ -84,28 +91,39 @@ public class BankActivity extends AppCompatActivity {
                 double transactionAmount = Double.parseDouble(inputAmount.getText().toString());
 
                 if (selectedAccount == "player1") {
+                    //if player1 is selected remove the inputted balance and create the transaction on the account
                     player1.updateBalance(-transactionAmount);
                     player1.addTransaction(new Transaction(
                             -transactionAmount, player1.getBalance(), "Bank Withdrawal", Transaction.TransactionType.WITHDRAWAL, "Player 1"));
                     populateBankInfo(player1);
                 } else {
+                    //if player2 is selected remove the inputted balance and create the transaction on the account
                     player2.updateBalance(-transactionAmount);
                     player2.addTransaction(new Transaction(
                             -transactionAmount, player2.getBalance(), "Bank Withdrawal", Transaction.TransactionType.WITHDRAWAL, "Player 2"));
                     populateBankInfo(player2);
                 }
             }
+            else {
+                Toast.makeText(this,"Please enter a minimum deposit amount", Toast.LENGTH_SHORT).show();
+            }
         });
 
-        //Menu Button
+        //Menu Button Click Listener
         findViewById(R.id.homebuttonBank).setOnClickListener(view -> {
+            //Pass accounts back to Main activity
             Intent intent = new Intent(this, MainActivity.class);
             intent.putExtra("player1", player1);
             intent.putExtra("player2", player2);
             startActivity(intent);
         });
+        //=====End Listeners Setup======
     }
 
+    /**
+     * Populates the Bank page with appropriate data for selected account
+     * @param account The account for which data will populate
+     */
     private void populateBankInfo(Account account)
     {
         TextView bankName = findViewById(R.id.bankNameText);
@@ -129,6 +147,7 @@ public class BankActivity extends AppCompatActivity {
 
         ArrayList<Transaction> recyclerViewList = account.getTransactions();
 
+        //sort the list by last created transaction
         Collections.sort(recyclerViewList, Comparator.comparing(Transaction::getDate).reversed());
 
         transactionsView.setAdapter(new TransactionsAdapter(recyclerViewList, false));
