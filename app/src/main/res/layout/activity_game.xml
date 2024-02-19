@@ -100,7 +100,7 @@
                 android:id="@+id/diceSumWhite"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="Dice sum: 00"
+                android:text=""
                 android:textAlignment="center"/>
             <Button
                 android:id="@+id/reroll1"
@@ -115,7 +115,7 @@
                 android:id="@+id/rerollleft1"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="Rerolls Left: 2"
+                android:text=""
                 android:textAlignment="center"/>
 
             <LinearLayout
@@ -149,12 +149,13 @@
                     android:textAlignment="center"
                     android:layout_weight="1"
                     android:textStyle="bold"/>
+
                 <TextView
-                    android:id="@+id/totalBetWhite"
+                    android:id="@+id/totalBetWhiteText"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_weight="10"
-                    android:text="$0.00"/>
+                    android:text="$0.00" />
             </LinearLayout>
 
             <LinearLayout
@@ -240,7 +241,7 @@
                 android:id="@+id/diceSumBlack"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="Dice sum: 00"
+                android:text=""
                 android:textAlignment="center"/>
             <Button
                 android:id="@+id/reroll2"
@@ -256,7 +257,7 @@
                 android:id="@+id/rerollleft2"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="Rerolls Left: 2"
+                android:text=""
                 android:textAlignment="center"/>
 
             <LinearLayout
@@ -291,7 +292,7 @@
                     android:layout_weight="1"
                     android:textStyle="bold"/>
                 <TextView
-                    android:id="@+id/totalBetBlack"
+                    android:id="@+id/totalBetBlackText"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_weight="10"
@@ -346,8 +347,8 @@
         android:layout_height="wrap_content"
         app:layout_constraintTop_toBottomOf="@id/pottotaltxt"
         android:layout_marginTop="5dp"
-        android:text="Roll 3 dice and add total value to your points\nInitial Buy-in: $50.00\nPlayers can place a Bet before each round (Min. $5.00)\nFirst player to 100 points wins the Pot\n*Returning to menu will cancel the game and refund players"
-        android:textSize="13dp"
+        android:text="Initial Buy-in: $50.00\nPlayers can place a Bet before each round (Min. $5.00)\nFirst player to 100 points wins the Pot\n*Returning to menu will cancel the game and refund players"
+        android:textSize="14dp"
         android:textStyle="bold"
         android:textAlignment="center"
         android:background="#7A8A97"/>
@@ -361,7 +362,7 @@
         app:layout_constraintHorizontal_bias="0.5"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@id/rules"
-        android:layout_marginTop="5dp"/>
+        android:layout_marginTop="20dp"/>
 
     <Button
         android:id="@+id/quitGameBtn"
@@ -372,7 +373,7 @@
         app:layout_constraintHorizontal_bias="0.5"
         app:layout_constraintStart_toEndOf="@+id/continueGameBtn"
         app:layout_constraintTop_toBottomOf="@id/rules"
-        android:layout_marginTop="5dp"
+        android:layout_marginTop="20dp"
         android:backgroundTint="#FAA2A2"
         android:textColor="@color/black"
         android:textStyle="bold"/>
